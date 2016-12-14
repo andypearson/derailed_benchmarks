@@ -64,7 +64,7 @@ namespace :perf do
 
     TEST_COUNT  = (ENV['TEST_COUNT'] || ENV['CNT'] || 1_000).to_i
     PATH_TO_HIT = ENV["PATH_TO_HIT"] || ENV['ENDPOINT'] || "/"
-    puts "Endpoint: #{ PATH_TO_HIT.inspect }"
+    puts "Endpoint: #{ PATH_TO_HIT.inspect }" unless ENV["TEST_SCRIPT"]
 
     require 'rack/test'
     require 'rack/file'
@@ -83,6 +83,15 @@ namespace :perf do
         cmd = "curl 'http://localhost:#{@port}#{path}' -s --fail 2>&1"
         response = `#{cmd}`
         raise "Bad request to #{cmd.inspect} Response:\n#{ response.inspect }" unless $?.success?
+      end
+    elsif ENV["TEST_SCRIPT"]
+      @app = Rack::MockRequest.new(DERAILED_APP)
+
+      def call_app
+        test_script = ENV["TEST_SCRIPT"]
+
+        puts "Running #{test_script}..."
+        test_script.camelize.constantize.new(@app).run
       end
     else
       @app = Rack::MockRequest.new(DERAILED_APP)
@@ -170,9 +179,13 @@ namespace :perf do
         end
       end
 
-      TEST_COUNT.times {
+      if ENV["TEST_SCRIPT"]
         call_app
-      }
+      else
+        TEST_COUNT.times {
+          call_app
+        }
+      end
     ensure
       @keep_going = false
       ram_thread.join

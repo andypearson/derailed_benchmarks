@@ -25,6 +25,7 @@ end
 
 require 'derailed_benchmarks/require_tree'
 require 'derailed_benchmarks/auth_helper'
+require 'derailed_benchmarks/test_script'
 
 if DerailedBenchmarks.gem_is_bundled?("devise")
   DerailedBenchmarks.auth = DerailedBenchmarks::AuthHelpers::Devise.new
